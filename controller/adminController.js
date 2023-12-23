@@ -249,12 +249,15 @@ const updateUser = async (req, res) => {
 
 const getUserList = async (req, res) => {
   try {
-    let { startDate, endDate, email, username } = req.body;
+    let { startDate, endDate, email, username,pageNumber,pageSize} = req.body;
 
     startDate = startDate
       ? Util.getOnlyDateByValue(startDate) + " 00:00:00"
       : "";
     endDate = endDate ? Util.getOnlyDateByValue(endDate) + " 23:59:59" : "";
+    pageNumber = Number(pageNumber ? parseInt(pageNumber) : 1);
+    pageSize = Number(pageSize ? parseInt(pageSize) : 50);
+    const offset = (pageNumber - 1) * pageSize
     // console.log(startDate, endDate, "n");
     let matchStage = { createdBy: req.middleware._id, isDeleted: false };
     if (startDate && endDate) {
@@ -274,7 +277,7 @@ const getUserList = async (req, res) => {
 
     // console.log(matchStage, "bb");
 
-    const userList = await User.aggregate([
+    const pipeLine = [
       { $match: matchStage },
       {
         $project: {
@@ -291,15 +294,17 @@ const getUserList = async (req, res) => {
           name: 1,
         },
       },
-    ]);
-    // console.log(userList, "nn", req.middleware._id);
+      {$skip:offset},
+      {$limit:pageSize}
+    ]
+    //  console.log(pipeLine,"mmm")
+    const userList = await User.aggregate(pipeLine);
     if (userList.length === 0) {
       return res
         .status(200)
         .json({ success: true, message: "No records found!" });
     }
-
-    return res.status(200).json({ success: true, data: userList });
+    return res.status(200).json({ success: true, dataCount:userList.length,data: userList });
   } catch (e) {
     console.log(e, "error");
     return res
