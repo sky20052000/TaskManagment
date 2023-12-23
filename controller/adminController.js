@@ -315,6 +315,9 @@ const getUserList = async (req, res) => {
 
 const deleteUser = async (req, res) => {
   try {
+    //  console.log(req.params.id,"n")
+       await User.findByIdAndUpdate(req.params.id, {$set:{isDeleted:true}},{new:true});
+       return res.status(200).json({success:true, message:"User deleted successfully"});
   } catch (e) {
     console.log(e, "nn");
     return res
@@ -325,6 +328,18 @@ const deleteUser = async (req, res) => {
 
 const getUserDetail = async (req, res) => {
   try {
+      let userID = req.body.userID
+      const getUserDetail = await User.findOne({
+        $and: [ {_id:userID},{isDeleted:false}]
+      }).select("-password -profile -updatedAt");
+      if (!getUserDetail) {
+        return res
+          .status(200)
+          .json({ success: true, message: "No records found!" });
+      }
+
+     return res.status(200).json({success:true, data:getUserDetail});
+
   } catch (e) {
     console.log(e, "nn");
     return res

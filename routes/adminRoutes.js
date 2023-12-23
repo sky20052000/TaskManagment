@@ -11,7 +11,11 @@ adminRouter.post("/generate-refresh-token", Authorize([1,2]), adminController.ge
 adminRouter.post("/create", Authorize([2]), adminController.createUser);
 adminRouter.put("/upate", Authorize([2]), adminController.updateUser);
 adminRouter.post("/getuserlist", Authorize([2]), adminController.getUserList);
-adminRouter.get("/getdetail/:id", Authorize([2]))
+adminRouter.post("/getdetail", Authorize([2]), adminController.getUserDetail);
+adminRouter.delete("/delete/:id", adminController.deleteUser);
+
+
+//////////  Task managment /////////
 
 
 module.exports = adminRouter;
