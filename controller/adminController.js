@@ -260,6 +260,7 @@ const getUserList = async (req, res) => {
     const offset = (pageNumber - 1) * pageSize
     // console.log(startDate, endDate, "n");
     let matchStage = { createdBy: req.middleware._id, isDeleted: false };
+      //console.log(matchStage,"bbb")
     if (startDate && endDate) {
       matchStage.createdAt = {
         $gte: new Date(startDate),
@@ -275,7 +276,7 @@ const getUserList = async (req, res) => {
       matchStage.username = username;
     }
 
-    // console.log(matchStage, "bb");
+     //console.log(matchStage, "bb");
 
     const pipeLine = [
       { $match: matchStage },
@@ -304,7 +305,7 @@ const getUserList = async (req, res) => {
         .status(200)
         .json({ success: true, message: "No records found!" });
     }
-    return res.status(200).json({ success: true, dataCount:userList.length,data: userList });
+    return res.status(200).json({ success: true, dataCount:userList.length,data:userList[0] });
   } catch (e) {
     console.log(e, "error");
     return res
