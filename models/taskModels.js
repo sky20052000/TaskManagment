@@ -7,6 +7,7 @@ const TaskShcema = new mongoose.Schema({
               Task_start_date:{type:Date, required:true},
               Task_complete_date:{type:Date, default:null},
               createdBy: { type:String, required:true},
+              userId: {type:String, required:true},
               Task_due_date:{type:Date, default:null},
               createdAt:{type:Date},
               updatedAt:{type:Date}

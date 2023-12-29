@@ -5,6 +5,7 @@ const dotenv = require("dotenv");
 dotenv.config();
 const User = require("../models/userModels");
 const Util = require("../utils/utils");
+const ExcelJS = require('exceljs');
 
 const GenerateAccessTokenAndRefreshToken = async (admindId) => {
   try {
@@ -349,6 +350,69 @@ const getUserDetail = async (req, res) => {
   }
 };
 
+
+const exportExcelFile = async (req, res) => {
+  try {
+      //  req.middleware._id = "65804808e0cce83872902b41" 
+      let matchStage = { createdBy: req.middleware._id, isDeleted: false };
+    const pipeLine = [
+      { $match: matchStage },
+      {
+        $project: {
+          _id: 1,
+          username: 1,
+          email: 1,
+          createdBy: 1,
+          createdAt: 1,
+          isDeleted: 1,
+        },
+      },
+
+    ]
+    //  console.log(pipeLine,"mmm")
+    const userList = await User.aggregate(pipeLine);
+    if (userList.length === 0) {
+      return res
+        .status(200)
+        .json({ success: true, message: "No records found!" });
+    }
+
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('UserList');
+  
+    // Define columns
+    worksheet.columns = [
+      { header: 'UserID', key: '_id', width:30},
+      { header: 'Username', key: 'username', width:15 },
+      { header: 'Email', key: 'email', width:30 },
+      { header: 'CreatedBy', key: 'createdBy' , width:30},
+      { header: 'CreatedAt', key: 'createdAt', width:30 },
+      { header: 'IsDeleted', key: 'isDeleted', width:10 },
+    ];
+
+     // Add data to the worksheet
+  worksheet.addRows(userList.map(user => ({
+    _id: user._id,
+    username: user.username,
+    email: user.email,
+    createdBy: user.createdBy,
+    createdAt: user.createdAt,
+    isDeleted: user.isDeleted,
+  })));
+    // Set headers for file download
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', 'attachment; filename=userList.xlsx');
+    await workbook.xlsx.write(res);
+    res.end();
+      return res.status(200).json({success:true, message:"Csv file donuloaded successfully!"});
+  } catch (e) {
+    console.log(e, "nn");
+    return res
+      .status(500)
+      .json({ sucess: false, message:"Something went wrong!"});
+  }
+};
+
 module.exports = {
   adminRegister,
   adminLogin,
@@ -359,6 +423,7 @@ module.exports = {
   getUserList,
   deleteUser,
   getUserDetail,
+  exportExcelFile
 };
 
 const verifyRefreshToken = async (admin_id, incomingRefreshToken) => {

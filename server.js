@@ -9,7 +9,7 @@ const adminRouter = require("./routes/adminRoutes");
 const userRouter = require("./routes/userRoutes");
 app.use(express.json());
 app.use(express.urlencoded({extended:true}));
-app.use(cors());
+app.use(cors('*'));
 app.use(cookieParser());
 
 //set route 

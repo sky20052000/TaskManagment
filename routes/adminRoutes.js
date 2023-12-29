@@ -12,7 +12,8 @@ adminRouter.post("/create", Authorize([2]), adminController.createUser);
 adminRouter.put("/upate", Authorize([2]), adminController.updateUser);
 adminRouter.post("/getuserlist", Authorize([2]), adminController.getUserList);
 adminRouter.post("/getdetail", Authorize([2]), adminController.getUserDetail);
-adminRouter.delete("/delete/:id", adminController.deleteUser);
+adminRouter.delete("/delete/:id", Authorize([2]),adminController.deleteUser);
+adminRouter.get("/dounloadExcel", Authorize([2]), adminController.exportExcelFile);
 
 
 //////////  Task managment /////////
