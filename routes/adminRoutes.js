@@ -17,6 +17,11 @@ adminRouter.get("/dounloadExcel", Authorize([2]), adminController.exportExcelFil
 
 
 //////////  Task managment /////////
+adminRouter.post("/addtask", Authorize([2]), adminController.createTask);
+adminRouter.put("/updatetask", Authorize([2]), adminController.updateTask);
+adminRouter.get("/gettasklist", Authorize([2]), adminController.getTaskList);
+adminRouter.get("/gettaskdetail/:_id", Authorize([2]), adminController.getTaskDetail);
+adminRouter.delete("/deletetask/:_id", Authorize([2]),adminController.deleteTask);
 
 
 module.exports = adminRouter;

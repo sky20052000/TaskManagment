@@ -6,6 +6,7 @@ dotenv.config();
 const User = require("../models/userModels");
 const Util = require("../utils/utils");
 const ExcelJS = require('exceljs');
+const Task = require("../models/taskModels");
 
 const GenerateAccessTokenAndRefreshToken = async (admindId) => {
   try {
@@ -306,7 +307,7 @@ const getUserList = async (req, res) => {
         .status(200)
         .json({ success: true, message: "No records found!" });
     }
-    return res.status(200).json({ success: true, dataCount:userList.length,data:userList[0] });
+    return res.status(200).json({ success: true, dataCount:userList.length,data:userList });
   } catch (e) {
     console.log(e, "error");
     return res
@@ -413,6 +414,149 @@ const exportExcelFile = async (req, res) => {
   }
 };
 
+ ///////////////////////////////////////// Task Module //////////////////////////////////
+
+const createTask = async (req, res) => {
+  try {
+    let { Task_name, Task_description, Task_title } = req.body;
+     let adminId = req.middleware._id;
+    if (!(Task_name && Task_description && Task_title)) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Mandatory fields can't be empty!" });
+    }
+    let taskCount = await Task.countDocuments({
+      $or: [{ adminId }, { Task_name }],
+    });
+    // console.log(usercount, "nn");
+    if (taskCount > 0) {
+      return res.status(400).send({
+        status: false,
+        message: "Task name is already exists",
+      });
+    }
+
+    let saveData = {
+      Task_name,
+      Task_description,
+      Task_title,
+      createdBy: req.middleware._id,
+    };
+    await Task.create(saveData);
+    return res
+      .status(200)
+      .json({ success: true, message: "Task created successfully!" });
+  } catch (e) {
+    console.log(e, "nn");
+    return res
+      .status(500)
+      .json({ sucess: false, message: "Something went wrong!" });
+  }
+};
+
+
+const updateTask = async (req, res) => {
+  try {
+    let { Task_id,Task_name, Task_description, Task_title } = req.body;
+     let adminId = req.middleware._id;
+    if (!(Task_id && Task_name && Task_description && Task_title)) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Mandatory fields can't be empty!" });
+    }
+    let updateData = {
+      Task_name,
+      Task_description,
+      Task_title,
+    };
+    await Task.findByIdAndUpdate({_id:Task_id},updateData,{new:true});
+    return res
+      .status(200)
+      .json({ success: true, message: "Task created successfully!" });
+  } catch (e) {
+    console.log(e, "nn");
+    return res
+      .status(500)
+      .json({ sucess: false, message: "Something went wrong!" });
+  }
+};
+
+
+
+const getTaskList = async (req, res) => {
+  try {
+    let matchStage = { createdBy: req.middleware._id };
+    const pipeLine = [
+      { $match: matchStage },
+      {
+        $project: {
+          _id: 1,
+             Task_name: 1,
+             Task_description:1,
+             Task_title:1,
+             createdBy:1
+        },
+      },
+        
+      {
+        $sort: {
+          createdAt: -1,
+        },
+      },
+    ]
+    //  console.log(pipeLine,"mmm")
+    const taskList = await Task.aggregate(pipeLine);
+    if (taskList.length === 0) {
+      return res
+        .status(200)
+        .json({ success: true, message: "No records found!" });
+    }
+    return res.status(200).json({ success: true, dataCount:taskList.length,data:taskList});
+  } catch (e) {
+    console.log(e, "error");
+    return res
+      .status(500)
+      .json({ sucess: false, message: "Something went wrong!" });
+  }
+};
+
+
+
+
+
+const getTaskDetail = async (req, res) => {
+  try {
+      const getTaskDetail = await Task.findById(req.params._id).select(" -updatedAt");
+      if (!getTaskDetail) {
+        return res
+          .status(200)
+          .json({ success: true, message: "No records found!" });
+      }
+
+     return res.status(200).json({success:true, data:getTaskDetail});
+
+  } catch (e) {
+    console.log(e, "nn");
+    return res
+      .status(500)
+      .json({ sucess: false, message: "Something went wrong!" });
+  }
+};
+
+
+const deleteTask = async (req, res) => {
+  try {
+       await Task.findByIdAndDelete(req.params._id)
+     return res.status(200).json({success:true, message:"Task deleted successfully!"});
+
+  } catch (e) {
+    console.log(e, "nn");
+    return res
+      .status(500)
+      .json({ sucess: false, message: "Something went wrong!" });
+  }
+};
+
 module.exports = {
   adminRegister,
   adminLogin,
@@ -423,7 +567,12 @@ module.exports = {
   getUserList,
   deleteUser,
   getUserDetail,
-  exportExcelFile
+  exportExcelFile,
+  createTask,
+  updateTask,
+  getTaskList,
+  getTaskDetail,
+  deleteTask
 };
 
 const verifyRefreshToken = async (admin_id, incomingRefreshToken) => {
