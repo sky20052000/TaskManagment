@@ -196,8 +196,8 @@ const generateRefreshToken = async (req, res) => {
 
 const createUser = async (req, res) => {
   try {
-    let { username, email, password } = req.body;
-    if (!(username && email && password)) {
+    let { username, email, password, role } = req.body;
+    if (!(username && email && password && role)) {
       return res
         .status(400)
         .json({ success: false, message: "Mandatory fields can't be empty!" });
@@ -219,6 +219,7 @@ const createUser = async (req, res) => {
     }
 
     let saveData = {
+      role:String(role? role:1),
       username,
       email,
       password,
