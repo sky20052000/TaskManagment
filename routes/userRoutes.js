@@ -5,6 +5,8 @@ const Authorize = require("../middleware/auth");
 
  userRouter.post("/userlogin", userController.userLogin);
  userRouter.patch("/updatepassword",Authorize([1]), userController.updatePassword);
+ userRouter.post("/forgetpassword",Authorize([1]), userController.forgetPassword);
+ userRouter.post("/resetpassword",Authorize([1]), userController.resetPassword);
 
 
 

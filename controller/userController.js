@@ -5,7 +5,8 @@ const dotenv = require("dotenv");
 dotenv.config();
 const Util = require("../utils/utils");
 const bcrypt = require("bcrypt");
-
+const randomstring = require("randomstring");
+const util = require("../utils/utils");
 const GenerateAccessTokenAndRefreshToken = async (userId) => {
   try {
     const user = await User.findById(userId);
@@ -114,7 +115,88 @@ const updatePassword = async (req, res) => {
   }
 };
 
+const forgetPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: "Mandatory fields can not be epmty!",
+      });
+    }
+
+    // validate email
+    const validateEmail = Validator.isEmail(email);
+    if (!validateEmail) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid email!" });
+    }
+
+    const user = await User.findOne({ email });
+    console.log(user, "n");
+    if (!user) {
+      return res
+        .status(400)
+        .json({ success: false, message: "User does not exists!" });
+    }
+    const resetPasswordToken = randomstring.generate();
+    console.log(resetPasswordToken, "n");
+    await User.updateOne(
+      { email },
+      { $set: { resetPasswordToken: resetPasswordToken } }
+    );
+    await util.resetPasswordToken(
+      user.username,
+      user.email,
+      resetPasswordToken
+    );
+    return res.status(200).json({
+      success: true,
+      message: "Reset password link successfuly send on your email!",
+    });
+  } catch (e) {
+    console.log(e, "nn");
+    return res
+      .status(500)
+      .json({ sucess: false, message: "Something went wrong!" });
+  }
+};
+
+const resetPassword = async (req, res) => {
+  try {
+     //console.log(req.query.resetPasswordToken,"n")
+    let { password } = req.body;
+     const resetPassowrdToken = req.query.resetPassowrdToken;
+    const getResetPasswordToken = await User.findOne({resetPassowrdToken:resetPassowrdToken});
+    if (!getResetPasswordToken) {
+      return res.status(400).json({
+        success: true,
+        message: "Token has been expired!",
+      });
+    }
+    const hashPasshword = await bcrypt.hash(password, 10);
+    await User.findByIdAndUpdate(
+      { _id: getResetPasswordToken._id },
+      { $set: { password: hashPasshword, resetPasswordToken:undefined } },
+      { new: true }
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: "Password reset successfully done!",
+    });
+  } catch (e) {
+    console.log(e, "nn");
+    return res
+      .status(500)
+      .json({ sucess: false, message: "Something went wrong!" });
+  }
+};
+
 module.exports = {
   userLogin,
   updatePassword,
+  forgetPassword,
+  resetPassword,
 };
