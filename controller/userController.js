@@ -165,11 +165,12 @@ const forgetPassword = async (req, res) => {
 
 const resetPassword = async (req, res) => {
   try {
-     //console.log(req.query.resetPasswordToken,"n")
     let { password } = req.body;
-     const resetPassowrdToken = req.query.resetPassowrdToken;
-    const getResetPasswordToken = await User.findOne({resetPassowrdToken:resetPassowrdToken});
-    if (!getResetPasswordToken) {
+    const resetPassowrdToken = req.query.resetPassowrdToken;
+    const getResetPasswordToken = await User.findOne({
+      resetPassowrdToken: resetPassowrdToken,
+    });
+    if (getResetPasswordToken?.resetPasswordToken.length == 0) {
       return res.status(400).json({
         success: true,
         message: "Token has been expired!",
@@ -178,7 +179,7 @@ const resetPassword = async (req, res) => {
     const hashPasshword = await bcrypt.hash(password, 10);
     await User.findByIdAndUpdate(
       { _id: getResetPasswordToken._id },
-      { $set: { password: hashPasshword, resetPasswordToken:undefined } },
+      { $set: { password: hashPasshword, resetPasswordToken: "" } },
       { new: true }
     );
 
